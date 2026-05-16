@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Warehouse Traffic Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4efe4;
+      --panel: rgba(255, 252, 246, 0.94);
+      --line: rgba(32, 34, 41, 0.08);
+      --ink: #1f2937;
+      --muted: #667085;
+      --accent: #0f766e;
+      --accent-soft: rgba(15, 118, 110, 0.16);
+      --danger: #b42318;
+      --danger-soft: rgba(180, 35, 24, 0.16);
+      --shadow: 0 20px 50px rgba(31, 41, 55, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(217, 119, 6, 0.10), transparent 26%),
+        var(--bg);
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 36px 20px 48px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 58px);
+      line-height: 0.94;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.66);
+      border: 1px solid rgba(31, 41, 55, 0.08);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .label {
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .hint {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .panel-copy {
+      max-width: 420px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    svg {
+      width: 100%;
+      height: 340px;
+      display: block;
+      overflow: visible;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+    }
+
+    .event-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .event-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .event-row:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .event-row strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 1024px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-head {
+        display: grid;
+      }
+
+      svg {
+        height: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Smart Warehouse / Live Marketplace Flow</div>
+      <h1>Реальный synthetic traffic без искусственного прошлого</h1>
+      <p class="lead">
+        Дашборд строится только по событиям, которые реально были сгенерированы и обработаны после запуска стенда.
+        Producer непрерывно публикует live-поток, а consumer агрегирует его из Cassandra audit по бизнес-времени события.
+      </p>
+      <div class="meta">
+        <div class="pill" id="windowLabel">Окно: ...</div>
+        <div class="pill">Обновление: каждые 10 секунд</div>
+        <div class="pill">Источник: Cassandra event_history_by_day</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <div class="label">Всего событий</div>
+        <div class="value" id="totalEvents">0</div>
+        <div class="hint">Сумма по часовым bucket-ам текущего окна</div>
+      </article>
+      <article class="card">
+        <div class="label">Успешно применено</div>
+        <div class="value" id="appliedEvents">0</div>
+        <div class="hint">События, дошедшие до проекций Cassandra</div>
+      </article>
+      <article class="card">
+        <div class="label">DLQ</div>
+        <div class="value" id="dlqEvents">0</div>
+        <div class="hint">Проблемные бизнес-события за это же окно</div>
+      </article>
+      <article class="card">
+        <div class="label">Текущий час</div>
+        <div class="value" id="currentHour">0</div>
+        <div class="hint">Поток событий в активном часовом bucket-е</div>
+      </article>
+    </section>
+
+    <section class="layout">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Почасовой поток событий</h2>
+            <div class="panel-copy">
+              График не дорисовывает прошлые дни. Если стенд поднят только что, виден только реальный live-период с момента старта.
+            </div>
+          </div>
+        </div>
+        <svg viewBox="0 0 1000 340" role="img" aria-label="Traffic chart">
+          <g id="grid"></g>
+          <path id="totalPath" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"></path>
+          <path id="dlqPath" fill="none" stroke="var(--danger)" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 8"></path>
+          <g id="xLabels"></g>
+        </svg>
+        <div class="legend">
+          <span class="legend-item"><span class="swatch" style="background: var(--accent)"></span> Total hourly events</span>
+          <span class="legend-item"><span class="swatch" style="background: var(--danger)"></span> DLQ hourly events</span>
+        </div>
+      </article>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Состав потока</h2>
+            <div class="panel-copy">
+              Распределение по типам помогает увидеть, что synthetic producer генерирует не один happy-path, а смешанный marketplace-поток.
+            </div>
+          </div>
+        </div>
+        <div class="event-list" id="eventTypeList"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const chart = {
+      width: 1000,
+      height: 340,
+      padding: { top: 24, right: 18, bottom: 42, left: 54 },
+    };
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("ru-RU").format(value);
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function buildPath(points, key, maxValue) {
+      if (!points.length) {
+        return "";
+      }
+
+      const innerWidth = chart.width - chart.padding.left - chart.padding.right;
+      const innerHeight = chart.height - chart.padding.top - chart.padding.bottom;
+      const denominator = Math.max(points.length - 1, 1);
+      const scaleY = maxValue > 0 ? innerHeight / maxValue : 0;
+
+      return points.map((point, index) => {
+        const x = chart.padding.left + (innerWidth * index) / denominator;
+        const y = chart.padding.top + innerHeight - point[key] * scaleY;
+        return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+      }).join(" ");
+    }
+
+    function renderGrid(maxValue) {
+      const innerHeight = chart.height - chart.padding.top - chart.padding.bottom;
+      const innerWidth = chart.width - chart.padding.left - chart.padding.right;
+      const ticks = 5;
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+
+      for (let index = 0; index <= ticks; index += 1) {
+        const y = chart.padding.top + (innerHeight * index) / ticks;
+        const value = Math.round(maxValue - (maxValue * index) / ticks);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", String(chart.padding.left));
+        line.setAttribute("x2", String(chart.padding.left + innerWidth));
+        line.setAttribute("y1", String(y));
+        line.setAttribute("y2", String(y));
+        line.setAttribute("stroke", "rgba(31, 41, 55, 0.10)");
+        line.setAttribute("stroke-width", "1");
+        grid.appendChild(line);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", String(chart.padding.left - 12));
+        label.setAttribute("y", String(y + 5));
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("fill", "#667085");
+        label.setAttribute("font-size", "12");
+        label.textContent = String(value);
+        grid.appendChild(label);
+      }
+    }
+
+    function renderXLabels(points) {
+      const labels = document.getElementById("xLabels");
+      labels.innerHTML = "";
+      if (!points.length) {
+        return;
+      }
+
+      const innerWidth = chart.width - chart.padding.left - chart.padding.right;
+      const denominator = Math.max(points.length - 1, 1);
+      const desiredCount = Math.min(6, points.length);
+      const step = Math.max(1, Math.floor(points.length / desiredCount));
+
+      points.forEach((point, index) => {
+        if (index % step !== 0 && index !== points.length - 1) {
+          return;
+        }
+        const x = chart.padding.left + (innerWidth * index) / denominator;
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", String(x));
+        label.setAttribute("y", String(chart.height - 12));
+        label.setAttribute("text-anchor", index === points.length - 1 ? "end" : "middle");
+        label.setAttribute("fill", "#667085");
+        label.setAttribute("font-size", "12");
+        label.textContent = point.timestamp.slice(5, 16).replace("T", " ");
+        labels.appendChild(label);
+      });
+    }
+
+    function renderEventTypes(series) {
+      const byType = new Map();
+      for (const point of series) {
+        for (const [eventType, count] of Object.entries(point.by_type)) {
+          byType.set(eventType, (byType.get(eventType) || 0) + count);
+        }
+      }
+
+      const rows = [...byType.entries()]
+        .sort((left, right) => right[1] - left[1])
+        .map(([eventType, count]) => `
+          <div class="event-row">
+            <strong>${eventType}</strong>
+            <span>${formatNumber(count)}</span>
+          </div>
+        `)
+        .join("");
+
+      document.getElementById("eventTypeList").innerHTML = rows || `
+        <div class="event-row">
+          <strong>Пока нет событий</strong>
+          <span>0</span>
+        </div>
+      `;
+    }
+
+    async function refresh() {
+      const response = await fetch("/api/v1/analytics/traffic?days=14", { cache: "no-store" });
+      const payload = await response.json();
+      const points = payload.series;
+      const summary = payload.summary;
+      const currentHour = points.length ? points[points.length - 1].total_events : 0;
+      const maxValue = Math.max(10, ...points.map((point) => Math.max(point.total_events, point.dlq_events)));
+
+      setText("totalEvents", formatNumber(summary.total_events));
+      setText("appliedEvents", formatNumber(summary.applied_events));
+      setText("dlqEvents", formatNumber(summary.dlq_events));
+      setText("currentHour", formatNumber(currentHour));
+      setText("windowLabel", `Окно: ${payload.from} → ${payload.to}`);
+
+      renderGrid(maxValue);
+      renderXLabels(points);
+      renderEventTypes(points);
+      document.getElementById("totalPath").setAttribute("d", buildPath(points, "total_events", maxValue));
+      document.getElementById("dlqPath").setAttribute("d", buildPath(points, "dlq_events", maxValue));
+    }
+
+    refresh();
+    setInterval(refresh, 10000);
+  </script>
+</body>
+</html>

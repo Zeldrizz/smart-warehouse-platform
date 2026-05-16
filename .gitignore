@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+.idea/
+.vscode/
+
+artifacts/*
+!artifacts/.gitkeep
+
+consumer_service/.pytest_cache/
+wms_service/.pytest_cache/
+tests/.pytest_cache/

@@ -1,0 +1,90 @@
+name: hw7-ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+  unit-tests:
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install unit test dependencies
+        run: pip install -r unit_tests_requirements.txt
+
+      - name: Run WMS unit tests
+        run: |
+          mkdir -p artifacts/unit
+          PYTHONPATH="$PWD:$PWD/wms_service" pytest -v --tb=short wms_service/tests/unit --junitxml=artifacts/unit/wms-unit.xml
+
+      - name: Run consumer unit tests
+        run: |
+          PYTHONPATH="$PWD:$PWD/consumer_service" pytest -v --tb=short consumer_service/tests/unit --junitxml=artifacts/unit/consumer-unit.xml
+
+      - name: Upload unit test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hw7-unit-artifacts
+          path: artifacts/unit
+
+  start-stack:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare artifact directories
+        run: mkdir -p artifacts/ci artifacts/load artifacts/prometheus artifacts/tests
+
+      - name: Start stack
+        run: docker compose up -d --build
+
+      - name: Wait for stack readiness
+        run: ./scripts/wait_for_stack.sh
+
+      - name: Run integration tests
+        run: docker compose --profile tests run --rm tests pytest -v --tb=short -s integration --junitxml=artifacts/tests/integration.xml
+
+      - name: Run E2E tests
+        run: docker compose --profile tests run --rm tests pytest -v --tb=short -s e2e --junitxml=artifacts/tests/e2e.xml
+
+      - name: Run load tests
+        run: ./scripts/run_load_tests.sh
+
+      - name: Validate Prometheus gates
+        run: ./scripts/run_prometheus_gates.sh
+
+      - name: Collect runtime artifacts
+        if: always()
+        run: ./scripts/collect_artifacts.sh artifacts/ci
+
+      - name: Upload stack artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hw7-stack-artifacts
+          path: artifacts
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose down -v

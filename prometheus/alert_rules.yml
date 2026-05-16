@@ -1,0 +1,49 @@
+groups:
+  - name: warehouse-http
+    rules:
+      - alert: HighHttpErrorRate
+        expr: (sum by(service) (rate(http_request_errors_total[5m])) / clamp_min(sum by(service) (rate(http_requests_total[5m])), 0.0001)) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP error rate is elevated"
+          description: "Service {{ $labels.service }} exceeded 5% HTTP error rate during the last 5 minutes."
+
+      - alert: HighHttpLatencyP95
+        expr: histogram_quantile(0.95, sum by(service, le) (rate(http_request_duration_seconds_bucket[5m]))) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP p95 latency is elevated"
+          description: "Service {{ $labels.service }} stayed above 1 second p95 HTTP latency for 2 minutes."
+
+      - alert: ServiceDown
+        expr: up{job=~"wms-service|consumer-service"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service target is down"
+          description: "Prometheus cannot scrape {{ $labels.job }}."
+
+  - name: warehouse-streaming
+    rules:
+      - alert: ConsumerLagHigh
+        expr: max(consumer_lag) > 5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consumer lag is growing"
+          description: "warehouse-state-consumer lag exceeded 5 messages for more than 1 minute."
+
+      - alert: EventProcessingDelayHigh
+        expr: histogram_quantile(0.95, sum by(le) (rate(event_end_to_end_delay_seconds_bucket[5m]))) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "End-to-end event delay is too high"
+          description: "Consumer p95 event processing delay stayed above 10 seconds for more than 2 minutes."

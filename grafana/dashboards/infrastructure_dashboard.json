@@ -1,0 +1,83 @@
+{
+  "id": null,
+  "uid": "hw7-infra",
+  "title": "HW7 Infrastructure Observability",
+  "tags": ["hw7", "infrastructure"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Kafka Broker Count",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "kafka_brokers",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Kafka Consumer Group Lag",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 18, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(kafka_consumergroup_lag{consumergroup=\"warehouse-state-consumer\"}) by (topic)",
+          "legendFormat": "{{topic}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Infra CPU Usage",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\"^/hw7-(kafka|cassandra).*\"}[5m])) by (name)",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Infra Memory Working Set",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "targets": [
+        {
+          "expr": "sum(container_memory_working_set_bytes{name=~\"^/hw7-(kafka|cassandra).*\"}) by (name) / 1024 / 1024",
+          "legendFormat": "{{name}} MiB",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Monitoring Targets Up",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 15 },
+      "targets": [
+        {
+          "expr": "up{job=~\"wms-service|consumer-service|kafka-exporter|cadvisor\"}",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" }
+}

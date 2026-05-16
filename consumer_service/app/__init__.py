@@ -1,0 +1,1 @@
+"""Warehouse consumer service package."""

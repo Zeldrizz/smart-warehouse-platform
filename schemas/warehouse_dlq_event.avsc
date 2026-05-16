@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "WarehouseDlqEvent",
+  "namespace": "smart.warehouse",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_type", "type": ["null", "string"], "default": null},
+    {"name": "original_event_json", "type": "string"},
+    {"name": "error_reason", "type": "string"},
+    {"name": "error_code", "type": "string"},
+    {"name": "failed_at", "type": "long"},
+    {"name": "kafka_partition", "type": "int"},
+    {"name": "kafka_offset", "type": "long"}
+  ]
+}
