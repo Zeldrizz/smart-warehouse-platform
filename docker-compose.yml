@@ -292,9 +292,15 @@ services:
       - "9308:9308"
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: ghcr.io/google/cadvisor:0.55.1
     container_name: smart-warehouse-cadvisor
     restart: unless-stopped
+    command:
+      - "-logtostderr"
+      - "-docker_only"
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
     ports:
       - "8088:8080"
     volumes:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Iterable
 from typing import Callable
 
 from fastapi import FastAPI, Request
@@ -71,6 +72,44 @@ dlq_events_total = Counter(
 
 def render_metrics() -> tuple[bytes, str]:
     return generate_latest(), CONTENT_TYPE_LATEST
+
+
+def initialize_http_metric_series(
+    service_name: str,
+    request_series: Iterable[tuple[str, str, str]],
+    error_series: Iterable[tuple[str, str, str]] = (),
+) -> None:
+    """Pre-create commonly queried HTTP metric series so dashboards can show zeroes before traffic."""
+
+    initialized_durations: set[tuple[str, str]] = set()
+
+    for method, endpoint, status in request_series:
+        normalized_method = method.upper()
+        http_requests_total.labels(service_name, normalized_method, endpoint, status)
+        initialized_durations.add((normalized_method, endpoint))
+
+    for method, endpoint, error_type in error_series:
+        normalized_method = method.upper()
+        http_request_errors_total.labels(service_name, normalized_method, endpoint, error_type)
+        initialized_durations.add((normalized_method, endpoint))
+
+    for method, endpoint in initialized_durations:
+        http_request_duration_seconds.labels(service_name, method, endpoint)
+
+
+def initialize_event_metric_series(event_types: Iterable[str]) -> None:
+    """Pre-create event metric series for known warehouse event types."""
+
+    for event_type in event_types:
+        events_processed_total.labels(event_type)
+        event_end_to_end_delay_seconds.labels(event_type)
+
+
+def initialize_consumer_lag_partitions(partitions: Iterable[int | str]) -> None:
+    """Pre-create consumer lag gauges for known partitions."""
+
+    for partition in partitions:
+        consumer_lag.labels(str(partition)).set(0)
 
 
 def install_http_metrics(app: FastAPI, service_name: str) -> None:

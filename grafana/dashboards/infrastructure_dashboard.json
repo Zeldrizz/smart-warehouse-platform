@@ -29,7 +29,7 @@
       "gridPos": { "h": 7, "w": 18, "x": 6, "y": 0 },
       "targets": [
         {
-          "expr": "sum(kafka_consumergroup_lag{consumergroup=\"warehouse-state-consumer\"}) by (topic)",
+          "expr": "sum(kafka_consumergroup_lag{consumergroup=\"warehouse-state-consumer\"}) by (topic) or label_replace(sum(consumer_lag), \"topic\", \"warehouse-events\", \"\", \"\")",
           "legendFormat": "{{topic}}",
           "refId": "A"
         }
@@ -43,8 +43,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\"^/smart-warehouse-(kafka|cassandra).*\"}[5m])) by (name)",
-          "legendFormat": "{{name}}",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"cadvisor\",container_label_com_docker_compose_project=\"smart-warehouse-platform\",container_label_com_docker_compose_service=~\"kafka-[12]|cassandra-[123]\"}[5m])) by (container_label_com_docker_compose_service)",
+          "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
       ]
@@ -57,8 +57,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
       "targets": [
         {
-          "expr": "sum(container_memory_working_set_bytes{name=~\"^/smart-warehouse-(kafka|cassandra).*\"}) by (name) / 1024 / 1024",
-          "legendFormat": "{{name}} MiB",
+          "expr": "sum(container_memory_working_set_bytes{job=\"cadvisor\",container_label_com_docker_compose_project=\"smart-warehouse-platform\",container_label_com_docker_compose_service=~\"kafka-[12]|cassandra-[123]\"}) by (container_label_com_docker_compose_service) / 1024 / 1024",
+          "legendFormat": "{{container_label_com_docker_compose_service}} MiB",
           "refId": "A"
         }
       ]

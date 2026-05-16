@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.routes import bind_runtime, router
-from app.metrics import install_http_metrics
+from app.metrics import initialize_consumer_metric_series, install_http_metrics
 from app.runtime import ConsumerRuntime
 
 logging.basicConfig(
@@ -39,4 +39,5 @@ app = FastAPI(
     lifespan=lifespan,
 )
 install_http_metrics(app, "consumer-service")
+initialize_consumer_metric_series()
 app.include_router(router)

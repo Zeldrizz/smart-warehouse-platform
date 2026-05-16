@@ -16,7 +16,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m])) or vector(0)",
           "legendFormat": "req/s",
           "refId": "A"
         }
@@ -30,7 +30,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum(rate(http_request_errors_total{service=\"wms-service\"}[5m])) / clamp_min(sum(rate(http_requests_total{service=\"wms-service\"}[5m])), 0.0001)",
+          "expr": "(sum(rate(http_request_errors_total{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m])) or vector(0)) / clamp_min((sum(rate(http_requests_total{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m])) or vector(0)), 0.0001)",
           "legendFormat": "error rate",
           "refId": "A"
         }
@@ -44,17 +44,17 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by(le) (rate(http_request_duration_seconds_bucket{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by(le) (rate(http_request_duration_seconds_bucket{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m]))) or vector(0)",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(http_request_duration_seconds_bucket{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(http_request_duration_seconds_bucket{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m]))) or vector(0)",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by(le) (rate(http_request_duration_seconds_bucket{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by(le) (rate(http_request_duration_seconds_bucket{service=\"wms-service\",endpoint=\"/api/v1/events\"}[5m]))) or vector(0)",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -68,7 +68,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "targets": [
         {
-          "expr": "sum(rate(http_request_errors_total{service=\"consumer-service\"}[5m])) / clamp_min(sum(rate(http_requests_total{service=\"consumer-service\"}[5m])), 0.0001)",
+          "expr": "(sum(rate(http_request_errors_total{service=\"consumer-service\"}[5m])) or vector(0)) / clamp_min((sum(rate(http_requests_total{service=\"consumer-service\"}[5m])) or vector(0)), 0.0001)",
           "legendFormat": "error rate",
           "refId": "A"
         }
@@ -82,7 +82,7 @@
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
       "targets": [
         {
-          "expr": "sum(rate(events_processed_total[5m])) by (event_type)",
+          "expr": "sum(rate(events_processed_total[5m])) by (event_type) or vector(0)",
           "legendFormat": "{{event_type}}",
           "refId": "A"
         }
@@ -96,7 +96,7 @@
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(event_processing_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(event_processing_duration_seconds_bucket[5m]))) or vector(0)",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -110,7 +110,7 @@
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(event_end_to_end_delay_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(event_end_to_end_delay_seconds_bucket[5m]))) or vector(0)",
           "legendFormat": "p95",
           "refId": "A"
         }

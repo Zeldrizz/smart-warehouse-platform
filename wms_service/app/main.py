@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.routes import bind_runtime, router, system_router
-from app.metrics import install_http_metrics
+from app.metrics import initialize_wms_metric_series, install_http_metrics
 from app.runtime import WMSRuntime
 
 logging.basicConfig(
@@ -39,5 +39,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 install_http_metrics(app, "wms-service")
+initialize_wms_metric_series()
 app.include_router(router)
 app.include_router(system_router)
