@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build-images:
     runs-on: ubuntu-latest
@@ -49,6 +52,8 @@ jobs:
   start-stack:
     needs: unit-tests
     runs-on: ubuntu-latest
+    env:
+      GENERATOR_ENABLED: "false"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
