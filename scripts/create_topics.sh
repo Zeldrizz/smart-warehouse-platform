@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+mkdir -p /tmp/kafka-init-logs
+cd /tmp/kafka-init-logs
+
 KAFKA_BROKERS="${KAFKA_BROKERS:-kafka-1:29092,kafka-2:29093}"
 SCHEMA_REGISTRY_URL="${SCHEMA_REGISTRY_URL:-http://schema-registry:8081}"
 EVENT_TOPIC="${EVENT_TOPIC:-warehouse-events}"

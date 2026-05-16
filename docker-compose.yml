@@ -123,6 +123,7 @@ services:
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
       EVENT_TOPIC: warehouse-events
       DLQ_TOPIC: warehouse-events-dlq
+      LOG_DIR: /tmp
 
   cassandra-1:
     image: cassandra:4.1
