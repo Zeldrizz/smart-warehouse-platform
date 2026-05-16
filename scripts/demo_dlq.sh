@@ -22,7 +22,7 @@ curl -sS "${CONSUMER_URL}/health"
 echo
 
 echo "Matching DLQ message from warehouse-events-dlq:"
-docker exec hw7-schema-registry bash -lc "timeout 15s kafka-avro-console-consumer --bootstrap-server kafka-1:29092 --topic warehouse-events-dlq --property schema.registry.url=${SCHEMA_REGISTRY_URL} --from-beginning | grep -F '${PRODUCT_ID}-invalid'" || true
+docker exec smart-warehouse-schema-registry bash -lc "timeout 15s kafka-avro-console-consumer --bootstrap-server kafka-1:29092 --topic warehouse-events-dlq --property schema.registry.url=${SCHEMA_REGISTRY_URL} --from-beginning | grep -F '${PRODUCT_ID}-invalid'" || true
 echo
 
 echo "Sending a valid event after the invalid one:"

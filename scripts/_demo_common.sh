@@ -66,7 +66,7 @@ demo_wait_for_cql_contains() {
   local output=""
 
   while (( elapsed < DEMO_CQL_WAIT_SECONDS )); do
-    output="$(docker exec hw7-cassandra-1 cqlsh -e "${query}" || true)"
+    output="$(docker exec smart-warehouse-cassandra-1 cqlsh -e "${query}" || true)"
     if grep -q "${expected}" <<<"${output}"; then
       printf '%s\n' "${output}"
       return 0

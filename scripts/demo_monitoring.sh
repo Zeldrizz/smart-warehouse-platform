@@ -83,12 +83,12 @@ curl -sS "${CONSUMER_URL}/metrics" | grep -E '^consumer_lag'
 echo
 
 echo "Stopping consumer container to trigger ServiceDown"
-docker stop hw7-consumer-service >/dev/null
+docker stop smart-warehouse-consumer-service >/dev/null
 sleep 75
 capture_alert_snapshot "service-down" 'ALERTS{alertname="ServiceDown",alertstate="firing"}'
 
 echo "Starting consumer container again"
-docker start hw7-consumer-service >/dev/null
+docker start smart-warehouse-consumer-service >/dev/null
 sleep 20
 curl -sS "${CONSUMER_URL}/health"
 echo

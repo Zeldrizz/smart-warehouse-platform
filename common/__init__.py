@@ -1,1 +1,1 @@
-"""Shared modules used by multiple hw_7 services."""
+"""Shared modules used by multiple Smart Warehouse services."""

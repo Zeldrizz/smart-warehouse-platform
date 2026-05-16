@@ -1,8 +1,8 @@
 {
   "id": null,
-  "uid": "hw7-infra",
-  "title": "HW7 Infrastructure Observability",
-  "tags": ["hw7", "infrastructure"],
+  "uid": "smart-warehouse-infra",
+  "title": "Smart Warehouse Infrastructure Observability",
+  "tags": ["smart-warehouse", "infrastructure"],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
@@ -43,7 +43,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\"^/hw7-(kafka|cassandra).*\"}[5m])) by (name)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\"^/smart-warehouse-(kafka|cassandra).*\"}[5m])) by (name)",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
@@ -57,7 +57,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
       "targets": [
         {
-          "expr": "sum(container_memory_working_set_bytes{name=~\"^/hw7-(kafka|cassandra).*\"}) by (name) / 1024 / 1024",
+          "expr": "sum(container_memory_working_set_bytes{name=~\"^/smart-warehouse-(kafka|cassandra).*\"}) by (name) / 1024 / 1024",
           "legendFormat": "{{name}} MiB",
           "refId": "A"
         }

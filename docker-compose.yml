@@ -1,7 +1,7 @@
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
-    container_name: hw7-zookeeper
+    container_name: smart-warehouse-zookeeper
     restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -13,12 +13,12 @@ services:
       timeout: 5s
       retries: 12
     volumes:
-      - hw7-zookeeper-data:/var/lib/zookeeper/data
-      - hw7-zookeeper-log:/var/lib/zookeeper/log
+      - smart-warehouse-zookeeper-data:/var/lib/zookeeper/data
+      - smart-warehouse-zookeeper-log:/var/lib/zookeeper/log
 
   kafka-1:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: hw7-kafka-1
+    container_name: smart-warehouse-kafka-1
     restart: unless-stopped
     depends_on:
       zookeeper:
@@ -45,13 +45,13 @@ services:
       start_period: 30s
     volumes:
       - ./scripts:/scripts:ro
-      - hw7-kafka-1-data:/var/lib/kafka/data
+      - smart-warehouse-kafka-1-data:/var/lib/kafka/data
     entrypoint: ["/bin/bash", "/scripts/start_kafka_broker.sh"]
     stop_grace_period: 60s
 
   kafka-2:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: hw7-kafka-2
+    container_name: smart-warehouse-kafka-2
     restart: unless-stopped
     depends_on:
       zookeeper:
@@ -78,13 +78,13 @@ services:
       start_period: 30s
     volumes:
       - ./scripts:/scripts:ro
-      - hw7-kafka-2-data:/var/lib/kafka/data
+      - smart-warehouse-kafka-2-data:/var/lib/kafka/data
     entrypoint: ["/bin/bash", "/scripts/start_kafka_broker.sh"]
     stop_grace_period: 60s
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.0
-    container_name: hw7-schema-registry
+    container_name: smart-warehouse-schema-registry
     restart: unless-stopped
     depends_on:
       kafka-1:
@@ -106,7 +106,7 @@ services:
 
   kafka-init:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: hw7-kafka-init
+    container_name: smart-warehouse-kafka-init
     depends_on:
       kafka-1:
         condition: service_healthy
@@ -127,7 +127,7 @@ services:
 
   cassandra-1:
     image: cassandra:4.1
-    container_name: hw7-cassandra-1
+    container_name: smart-warehouse-cassandra-1
     ports:
       - "9042:9042"
     environment:
@@ -144,11 +144,11 @@ services:
       retries: 15
       start_period: 45s
     volumes:
-      - hw7-cassandra-1-data:/var/lib/cassandra
+      - smart-warehouse-cassandra-1-data:/var/lib/cassandra
 
   cassandra-2:
     image: cassandra:4.1
-    container_name: hw7-cassandra-2
+    container_name: smart-warehouse-cassandra-2
     depends_on:
       cassandra-1:
         condition: service_healthy
@@ -169,11 +169,11 @@ services:
       retries: 15
       start_period: 45s
     volumes:
-      - hw7-cassandra-2-data:/var/lib/cassandra
+      - smart-warehouse-cassandra-2-data:/var/lib/cassandra
 
   cassandra-3:
     image: cassandra:4.1
-    container_name: hw7-cassandra-3
+    container_name: smart-warehouse-cassandra-3
     depends_on:
       cassandra-2:
         condition: service_healthy
@@ -194,13 +194,13 @@ services:
       retries: 15
       start_period: 45s
     volumes:
-      - hw7-cassandra-3-data:/var/lib/cassandra
+      - smart-warehouse-cassandra-3-data:/var/lib/cassandra
 
   cassandra-migrator:
     build:
       context: .
       dockerfile: ./migrator/Dockerfile
-    container_name: hw7-cassandra-migrator
+    container_name: smart-warehouse-cassandra-migrator
     depends_on:
       cassandra-1:
         condition: service_healthy
@@ -216,7 +216,7 @@ services:
     build:
       context: .
       dockerfile: ./wms_service/Dockerfile
-    container_name: hw7-wms-service
+    container_name: smart-warehouse-wms-service
     restart: unless-stopped
     depends_on:
       kafka-init:
@@ -246,7 +246,7 @@ services:
     build:
       context: .
       dockerfile: ./consumer_service/Dockerfile
-    container_name: hw7-consumer-service
+    container_name: smart-warehouse-consumer-service
     restart: unless-stopped
     depends_on:
       kafka-init:
@@ -276,7 +276,7 @@ services:
 
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.7.0
-    container_name: hw7-kafka-exporter
+    container_name: smart-warehouse-kafka-exporter
     restart: unless-stopped
     depends_on:
       kafka-1:
@@ -293,7 +293,7 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
-    container_name: hw7-cadvisor
+    container_name: smart-warehouse-cadvisor
     restart: unless-stopped
     ports:
       - "8088:8080"
@@ -306,7 +306,7 @@ services:
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: hw7-alertmanager
+    container_name: smart-warehouse-alertmanager
     restart: unless-stopped
     ports:
       - "9094:9093"
@@ -315,7 +315,7 @@ services:
       - "--storage.path=/alertmanager"
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-      - hw7-alertmanager-data:/alertmanager
+      - smart-warehouse-alertmanager-data:/alertmanager
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:9093/-/healthy"]
       interval: 10s
@@ -324,7 +324,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.52.0
-    container_name: hw7-prometheus
+    container_name: smart-warehouse-prometheus
     restart: unless-stopped
     depends_on:
       wms-service:
@@ -342,7 +342,7 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
-      - hw7-prometheus-data:/prometheus
+      - smart-warehouse-prometheus-data:/prometheus
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
       interval: 10s
@@ -351,7 +351,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.0.0
-    container_name: hw7-grafana
+    container_name: smart-warehouse-grafana
     restart: unless-stopped
     depends_on:
       prometheus:
@@ -364,7 +364,7 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
-      - hw7-grafana-data:/var/lib/grafana
+      - smart-warehouse-grafana-data:/var/lib/grafana
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 10s
@@ -375,7 +375,7 @@ services:
     build:
       context: .
       dockerfile: ./tests/Dockerfile
-    container_name: hw7-tests
+    container_name: smart-warehouse-tests
     profiles: ["tests"]
     depends_on:
       wms-service:
@@ -399,7 +399,7 @@ services:
 
   load-tests:
     image: grafana/k6:0.49.0
-    container_name: hw7-load-tests
+    container_name: smart-warehouse-load-tests
     profiles: ["load"]
     depends_on:
       wms-service:
@@ -412,13 +412,13 @@ services:
     command: ["run", "--summary-export=/artifacts/load/k6-summary.json", "/scripts/load/wms_events.js"]
 
 volumes:
-  hw7-zookeeper-data:
-  hw7-zookeeper-log:
-  hw7-kafka-1-data:
-  hw7-kafka-2-data:
-  hw7-cassandra-1-data:
-  hw7-cassandra-2-data:
-  hw7-cassandra-3-data:
-  hw7-alertmanager-data:
-  hw7-prometheus-data:
-  hw7-grafana-data:
+  smart-warehouse-zookeeper-data:
+  smart-warehouse-zookeeper-log:
+  smart-warehouse-kafka-1-data:
+  smart-warehouse-kafka-2-data:
+  smart-warehouse-cassandra-1-data:
+  smart-warehouse-cassandra-2-data:
+  smart-warehouse-cassandra-3-data:
+  smart-warehouse-alertmanager-data:
+  smart-warehouse-prometheus-data:
+  smart-warehouse-grafana-data:

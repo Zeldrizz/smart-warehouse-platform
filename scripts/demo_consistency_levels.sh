@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-STATE_FILE="${STATE_FILE:-/tmp/hw7-report-demo-state.env}"
+STATE_FILE="${STATE_FILE:-/tmp/smart-warehouse-report-demo-state.env}"
 
 if [[ -f "${STATE_FILE}" ]]; then
   source "${STATE_FILE}"
@@ -14,7 +14,7 @@ run_query() {
 
   echo "Consistency level set to ${level}."
   set +e
-  docker exec -i hw7-cassandra-1 cqlsh <<EOF
+  docker exec -i smart-warehouse-cassandra-1 cqlsh <<EOF
 CONSISTENCY ${level};
 SELECT product_id, total_available_quantity, total_reserved_quantity
 FROM warehouse.inventory_totals_by_product
@@ -27,15 +27,15 @@ EOF
   echo
 }
 
-docker stop hw7-cassandra-2 >/dev/null
+docker stop smart-warehouse-cassandra-2 >/dev/null
 sleep 10
 
 run_query ONE
 run_query QUORUM
 run_query ALL
 
-docker start hw7-cassandra-2 >/dev/null
+docker start smart-warehouse-cassandra-2 >/dev/null
 sleep 25
 
 echo "Cluster status after Cassandra node recovery:"
-docker exec hw7-cassandra-1 nodetool status
+docker exec smart-warehouse-cassandra-1 nodetool status

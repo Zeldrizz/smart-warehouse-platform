@@ -1,8 +1,8 @@
 {
   "id": null,
-  "uid": "hw7-services",
-  "title": "HW7 Services Observability",
-  "tags": ["hw7", "services"],
+  "uid": "smart-warehouse-services",
+  "title": "Smart Warehouse Services Observability",
+  "tags": ["smart-warehouse", "services"],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,

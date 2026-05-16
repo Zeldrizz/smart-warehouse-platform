@@ -36,8 +36,8 @@ docker-compose ps
 - `curl http://localhost:8002/health`
 - `curl http://localhost:8001/metrics | head`
 - `curl http://localhost:8002/metrics | head`
-- `docker exec hw7-cassandra-1 nodetool status`
-- `docker exec hw7-kafka-1 kafka-topics --describe --topic warehouse-events --bootstrap-server kafka-1:29092`
+- `docker exec smart-warehouse-cassandra-1 nodetool status`
+- `docker exec smart-warehouse-kafka-1 kafka-topics --describe --topic warehouse-events --bootstrap-server kafka-1:29092`
 
 Где обеспечивается готовность стенда:
 
@@ -48,7 +48,7 @@ docker-compose ps
 
 В GitHub открыть workflow:
 
-- `.github/workflows/hw7-ci.yml`
+- `.github/workflows/smart-warehouse-ci.yml`
 
 Показать:
 
@@ -60,7 +60,7 @@ docker-compose ps
 
 Где смотреть:
 
-- `.github/workflows/hw7-ci.yml:1-95`
+- `.github/workflows/smart-warehouse-ci.yml:1-95`
 
 ### 0.3 Показ Grafana, Prometheus и Alertmanager
 
@@ -68,8 +68,8 @@ docker-compose ps
 
 - `Prometheus` targets и alerts;
 - `Grafana` dashboards:
-  - `HW7 Services Observability`
-  - `HW7 Infrastructure Observability`
+  - `Smart Warehouse Services Observability`
+  - `Smart Warehouse Infrastructure Observability`
 - `Alertmanager` UI.
 
 Где смотреть код:
@@ -141,7 +141,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:1-10`
+- `.github/workflows/smart-warehouse-ci.yml:1-10`
 
 ### 1.3 «Пайплайн падает при любой ошибке (build, tests, metrics validation).»
 
@@ -151,9 +151,9 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:18-20`
-- `.github/workflows/hw7-ci.yml:36-43`
-- `.github/workflows/hw7-ci.yml:64-80`
+- `.github/workflows/smart-warehouse-ci.yml:18-20`
+- `.github/workflows/smart-warehouse-ci.yml:36-43`
+- `.github/workflows/smart-warehouse-ci.yml:64-80`
 - `scripts/check_prometheus_gates.py:105-154`
 
 ### 1.4 «Метрики экспортируются в Prometheus-совместимом формате.»
@@ -202,11 +202,11 @@ docker-compose down -v
 
 **Оригинальная формулировка.** «Необходимо настроить CI pipeline, который автоматически запускается при push или PR.»
 
-**Что сделано.** В корне standalone-репозитория лежит GitHub Actions workflow `.github/workflows/hw7-ci.yml`. Он запускается автоматически на `push` и `pull_request`, а также вручную на `workflow_dispatch`.
+**Что сделано.** В корне standalone-репозитория лежит GitHub Actions workflow `.github/workflows/smart-warehouse-ci.yml`. Он запускается автоматически на `push` и `pull_request`, а также вручную на `workflow_dispatch`.
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:1-10`
+- `.github/workflows/smart-warehouse-ci.yml:1-10`
 
 **Подпункт.** «В пайплайне есть шаги: build — сборка всех ваших сервисов.»
 
@@ -214,7 +214,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:12-20`
+- `.github/workflows/smart-warehouse-ci.yml:12-20`
 
 **Подпункт.** «unit tests — модульные тесты для каждого сервиса.»
 
@@ -222,7 +222,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:21-50`
+- `.github/workflows/smart-warehouse-ci.yml:21-50`
 - `wms_service/tests/unit/test_event_publisher.py:1-67`
 - `wms_service/tests/unit/test_http_metrics.py:1-44`
 - `consumer_service/tests/unit/test_event_processor.py:1-179`
@@ -233,7 +233,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:64-72`
+- `.github/workflows/smart-warehouse-ci.yml:64-72`
 - `scripts/run_integration_tests.sh:1-10`
 
 **Подпункт.** «Пайплайн падает при любой ошибке.»
@@ -242,7 +242,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:79-95`
+- `.github/workflows/smart-warehouse-ci.yml:79-95`
 
 **Подпункт.** «Конфигурация CI хранится в репозитории.»
 
@@ -250,7 +250,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:1-95`
+- `.github/workflows/smart-warehouse-ci.yml:1-95`
 
 **Подпункт.** «Логи пайплайна доступны и читаемы.»
 
@@ -258,7 +258,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:82-91`
+- `.github/workflows/smart-warehouse-ci.yml:82-91`
 - `scripts/collect_artifacts.sh:10-16`
 
 ### 2.2 Пункт 2. Интеграционные тесты сервисов
@@ -458,7 +458,7 @@ docker-compose down -v
 
 **Оригинальная формулировка.** «Необходимо создать дашборды в Grafana для визуализации метрик ваших сервисов.»
 
-**Что сделано.** Создан сервисный дашборд `HW7 Services Observability`.
+**Что сделано.** Создан сервисный дашборд `Smart Warehouse Services Observability`.
 
 **Где смотреть.**
 
@@ -531,7 +531,7 @@ docker-compose down -v
 
 **Оригинальная формулировка.** «Необходимо создать отдельный дашборд для мониторинга инфраструктуры вашей системы.»
 
-**Что сделано.** Создан `HW7 Infrastructure Observability`.
+**Что сделано.** Создан `Smart Warehouse Infrastructure Observability`.
 
 **Где смотреть.**
 
@@ -582,7 +582,7 @@ docker-compose down -v
 **Где смотреть.**
 
 - `scripts/load/wms_events.js:1-87`
-- `.github/workflows/hw7-ci.yml:76-80`
+- `.github/workflows/smart-warehouse-ci.yml:76-80`
 
 **Подпункт.** «Тест запускается из CI.»
 
@@ -590,7 +590,7 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:76-77`
+- `.github/workflows/smart-warehouse-ci.yml:76-77`
 - `scripts/run_load_tests.sh:1-12`
 
 **Подпункт.** «Тест создаёт реалистичную нагрузку: минимум 10 VU, минимум 30 секунд.»
@@ -632,7 +632,7 @@ docker-compose down -v
 **Где смотреть.**
 
 - `docker-compose.yml:399-411`
-- `.github/workflows/hw7-ci.yml:86-91`
+- `.github/workflows/smart-warehouse-ci.yml:86-91`
 - `artifacts/load/k6-summary.json`
 
 ---
@@ -658,19 +658,19 @@ docker-compose down -v
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:52-95`
+- `.github/workflows/smart-warehouse-ci.yml:52-95`
 
 **Подпункт.** «Поднимает всю систему (docker-compose up).»
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:64-65`
+- `.github/workflows/smart-warehouse-ci.yml:64-65`
 
 **Подпункт.** «Запускает нагрузку.»
 
 **Где смотреть.**
 
-- `.github/workflows/hw7-ci.yml:76-77`
+- `.github/workflows/smart-warehouse-ci.yml:76-77`
 
 **Подпункт.** «Параллельно собирает метрики из Prometheus.»
 
@@ -679,7 +679,7 @@ docker-compose down -v
 **Где смотреть.**
 
 - `prometheus/prometheus.yml:1-37`
-- `.github/workflows/hw7-ci.yml:64-80`
+- `.github/workflows/smart-warehouse-ci.yml:64-80`
 
 **Подпункт.** «Проверяет числовые условия по метрикам, например: error rate < 1%, p95 latency < 500ms.»
 
@@ -718,7 +718,7 @@ docker-compose down -v
 
 - `scripts/check_prometheus_gates.py:131-133`
 - `scripts/collect_artifacts.sh:10-16`
-- `.github/workflows/hw7-ci.yml:82-91`
+- `.github/workflows/smart-warehouse-ci.yml:82-91`
 
 ### 4.2 Пункт 9. Prometheus alert rules как код
 
@@ -842,7 +842,7 @@ docker-compose down -v
 
 - `scripts/check_prometheus_gates.py:105-154`
 - `scripts/run_prometheus_gates.sh:1-34`
-- `.github/workflows/hw7-ci.yml:79-80`
+- `.github/workflows/smart-warehouse-ci.yml:79-80`
 
 **Подпункт.** «SLI задокументированы в README: что измеряется, какой запрос к Prometheus, целевые значения, обоснование порогов.»
 
@@ -933,14 +933,14 @@ docker-compose ps
 Фактический результат:
 
 - все long-running сервисы в `Up (healthy)`;
-- `hw7-cassandra-migrator` - `Exit 0`;
-- `hw7-kafka-init` - `Exit 0`.
+- `smart-warehouse-cassandra-migrator` - `Exit 0`;
+- `smart-warehouse-kafka-init` - `Exit 0`.
 
 Дополнительная проверка:
 
 ```bash
-docker exec hw7-cassandra-1 nodetool status
-docker exec hw7-kafka-1 kafka-topics --describe --topic warehouse-events --bootstrap-server kafka-1:29092
+docker exec smart-warehouse-cassandra-1 nodetool status
+docker exec smart-warehouse-kafka-1 kafka-topics --describe --topic warehouse-events --bootstrap-server kafka-1:29092
 ```
 
 Фактический результат:
@@ -1072,7 +1072,7 @@ docker exec hw7-kafka-1 kafka-topics --describe --topic warehouse-events --boots
 
 Где смотреть:
 
-- `.github/workflows/hw7-ci.yml:8-9`
+- `.github/workflows/smart-warehouse-ci.yml:8-9`
 
 ### 7.2 Runtime warnings от вендорных контейнеров
 

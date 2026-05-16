@@ -1,4 +1,4 @@
-"""Fixtures for hw_7 integration tests."""
+"""Shared fixtures for integration and end-to-end tests."""
 
 from __future__ import annotations
 
@@ -90,7 +90,7 @@ def build_dlq_consumer() -> AvroConsumer:
         {
             "bootstrap.servers": KAFKA_BROKERS,
             "schema.registry.url": SCHEMA_REGISTRY_URL,
-            "group.id": f"hw7-tests-dlq-{uuid.uuid4().hex[:8]}",
+            "group.id": f"smart-warehouse-tests-dlq-{uuid.uuid4().hex[:8]}",
             "auto.offset.reset": "earliest",
             "enable.auto.commit": False,
         }

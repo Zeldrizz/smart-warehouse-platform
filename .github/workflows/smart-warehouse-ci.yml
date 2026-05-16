@@ -1,4 +1,4 @@
-name: hw7-ci
+name: smart-warehouse-ci
 
 on:
   push:
@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hw7-unit-artifacts
+          name: smart-warehouse-unit-artifacts
           path: artifacts/unit
 
   start-stack:
@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hw7-stack-artifacts
+          name: smart-warehouse-stack-artifacts
           path: artifacts
 
       - name: Tear down stack

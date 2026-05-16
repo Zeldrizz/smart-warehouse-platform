@@ -51,7 +51,7 @@ All checks are automated and run without manual setup steps:
 
 GitHub Actions workflow:
 
-- `.github/workflows/hw7-ci.yml`
+- `.github/workflows/smart-warehouse-ci.yml`
 
 Pipeline stages:
 
