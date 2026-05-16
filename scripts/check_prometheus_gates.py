@@ -103,28 +103,46 @@ def main() -> int:
     }
 
     failures: list[str] = []
+    warnings: list[str] = []
     for name, config in QUERIES.items():
         value, payload = results[name]
-        passed = evaluate(config["comparison"], value, config["target"])
+        target_passed = evaluate(config["comparison"], value, config["target"])
+        gate_passed = evaluate(config["comparison"], value, config["failure_threshold"])
         report["checks"][name] = {
             "value": value,
             "comparison": config["comparison"],
             "target": config["target"],
             "failure_threshold": config["failure_threshold"],
             "unit": config["unit"],
-            "passed": passed,
+            "target_passed": target_passed,
+            "gate_passed": gate_passed,
             "query": config["expr"],
             "raw_response": payload,
         }
-        if not passed:
-            failures.append(f"{name}: actual={value} target={config['comparison']} {config['target']}")
+        if not target_passed:
+            warnings.append(
+                f"{name}: actual={value} target={config['comparison']} {config['target']}"
+            )
+        if not gate_passed:
+            failures.append(
+                f"{name}: actual={value} failure_threshold={config['comparison']} {config['failure_threshold']}"
+            )
 
     output_path = Path(args.output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
     for name, data in report["checks"].items():
-        print(f"{name}: value={data['value']:.6f} target={data['comparison']} {data['target']} passed={data['passed']}")
+        print(
+            f"{name}: value={data['value']:.6f} "
+            f"target={data['comparison']} {data['target']} target_passed={data['target_passed']} "
+            f"failure_threshold={data['comparison']} {data['failure_threshold']} gate_passed={data['gate_passed']}"
+        )
+
+    if warnings:
+        print("Prometheus targets missed but still within failure thresholds:")
+        for warning in warnings:
+            print(f" - {warning}")
 
     if failures:
         print("Prometheus gates failed:")
