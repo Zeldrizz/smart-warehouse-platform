@@ -75,7 +75,7 @@ export function publishEvents() {
     "publish body has accepted status": (r) => r.json("status") === "accepted",
   });
 
-  sleep(0.2);
+  sleep(1.25);
 }
 
 export function healthcheck() {

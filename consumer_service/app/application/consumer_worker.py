@@ -134,7 +134,7 @@ class ConsumerWorker:
                         dlq_events_total.labels(result.error_code or "DLQ_ERROR").inc()
                         self._repository.apply_state_change([], [], None, context, outcome="DLQ", error_code=result.error_code, error_reason=result.error_reason)
 
-                    self._consumer.commit(message=msg, asynchronous=False)
+                    self._consumer.commit(message=msg, asynchronous=True)
                     elapsed = time.monotonic() - started_at
                     events_processed_total.labels(context.event_type).inc()
                     event_processing_duration_seconds.observe(elapsed)
