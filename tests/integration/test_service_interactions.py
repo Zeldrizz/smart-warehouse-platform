@@ -43,6 +43,15 @@ def get_inventory(session, product_id: str, zone_id: str):
     return row
 
 
+def metric_value(metrics_text: str, metric_name: str, required_fragments: tuple[str, ...]) -> float:
+    for line in metrics_text.splitlines():
+        if not line.startswith(f"{metric_name}" + "{"):
+            continue
+        if all(fragment in line for fragment in required_fragments):
+            return float(line.rsplit(" ", 1)[1])
+    raise AssertionError(f"Metric {metric_name} with fragments {required_fragments} not found")
+
+
 @pytest.mark.usefixtures("wait_for_services")
 class TestServiceInteractions:
     def test_wms_event_flows_through_consumer_to_cassandra(self, http_client, cassandra_session, unique_suffix: str):
@@ -130,6 +139,78 @@ class TestServiceInteractions:
             assert all(item["value"][1] == "1" for item in result)
 
         wait_until(_assert_scrape_targets)
+
+    def test_posted_events_increment_wms_and_consumer_metric_series(self, http_client, cassandra_session, unique_suffix: str):
+        product_id = f"SKU-METRICS-{unique_suffix}"
+
+        wms_metrics_before = http_client.get(f"{WMS_SERVICE_URL}/metrics")
+        consumer_metrics_before = http_client.get(f"{CONSUMER_SERVICE_URL}/metrics")
+        assert wms_metrics_before.status_code == 200
+        assert consumer_metrics_before.status_code == 200
+
+        wms_requests_before = metric_value(
+            wms_metrics_before.text,
+            "http_requests_total",
+            (
+                'service="wms-service"',
+                'method="POST"',
+                'endpoint="/api/v1/events"',
+                'status="202"',
+            ),
+        )
+        processed_before = metric_value(
+            consumer_metrics_before.text,
+            "events_processed_total",
+            ('event_type="PRODUCT_RECEIVED"',),
+        )
+        delay_count_before = metric_value(
+            consumer_metrics_before.text,
+            "event_end_to_end_delay_seconds_count",
+            ('event_type="PRODUCT_RECEIVED"',),
+        )
+
+        post_event(http_client, {
+            "event_id": f"{product_id}-recv",
+            "event_type": "PRODUCT_RECEIVED",
+            "occurred_at": int(time.time() * 1000),
+            "product_id": product_id,
+            "zone_id": "ZONE-A",
+            "quantity": 13,
+        })
+        wait_until(lambda: assert_inventory(cassandra_session, product_id, "ZONE-A", 13, 0))
+
+        def _assert_metric_growth():
+            wms_metrics_after = http_client.get(f"{WMS_SERVICE_URL}/metrics")
+            consumer_metrics_after = http_client.get(f"{CONSUMER_SERVICE_URL}/metrics")
+            assert wms_metrics_after.status_code == 200
+            assert consumer_metrics_after.status_code == 200
+
+            wms_requests_after = metric_value(
+                wms_metrics_after.text,
+                "http_requests_total",
+                (
+                    'service="wms-service"',
+                    'method="POST"',
+                    'endpoint="/api/v1/events"',
+                    'status="202"',
+                ),
+            )
+            processed_after = metric_value(
+                consumer_metrics_after.text,
+                "events_processed_total",
+                ('event_type="PRODUCT_RECEIVED"',),
+            )
+            delay_count_after = metric_value(
+                consumer_metrics_after.text,
+                "event_end_to_end_delay_seconds_count",
+                ('event_type="PRODUCT_RECEIVED"',),
+            )
+
+            assert wms_requests_after >= wms_requests_before + 1
+            assert processed_after >= processed_before + 1
+            assert delay_count_after >= delay_count_before + 1
+
+        wait_until(_assert_metric_growth)
 
 
 def assert_inventory(session, product_id: str, zone_id: str, available: int, reserved: int) -> None:

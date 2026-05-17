@@ -66,3 +66,27 @@ def test_metric_initializers_seed_zero_valued_series() -> None:
     assert 'http_request_duration_seconds_bucket{endpoint="/api/v1/events",le="0.005",method="POST",service="seeded-service"}' in metrics_text
     assert 'events_processed_total{event_type="PRODUCT_RECEIVED"}' in metrics_text
     assert 'consumer_lag{partition="0"}' in metrics_text
+
+
+def test_http_metrics_capture_unhandled_exception_as_500() -> None:
+    app = FastAPI()
+    install_http_metrics(app, "wms-crash-unit")
+
+    @app.get("/crash")
+    async def crash() -> None:
+        raise RuntimeError("boom")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/crash")
+
+    assert response.status_code == 500
+
+    metrics_text = render_metrics()[0].decode("utf-8")
+    assert (
+        'http_requests_total{endpoint="/crash",method="GET",service="wms-crash-unit",status="500"}'
+        in metrics_text
+    )
+    assert (
+        'http_request_errors_total{endpoint="/crash",error_type="unhandled_exception",method="GET",service="wms-crash-unit"}'
+        in metrics_text
+    )

@@ -65,3 +65,50 @@ def test_order_created_mapping_preserves_items_and_order_routing_key() -> None:
         {"product_id": "SKU-2", "zone_id": "ZONE-B", "quantity": 3},
     ]
     assert producer.calls[0]["record"]["items"][1]["product_id"] == "SKU-2"
+
+
+def test_product_received_v2_mapping_keeps_supplier_id() -> None:
+    producer = RecordingProducer()
+    publisher = WarehouseEventPublisher(producer)
+    request = ProductReceivedRequest(
+        event_id="evt-2",
+        event_type="PRODUCT_RECEIVED",
+        occurred_at=1710000002000,
+        product_id="SKU-2",
+        zone_id="ZONE-B",
+        quantity=7,
+        supplier_id="SUP-2",
+        schema_version="v2",
+    )
+
+    envelope = publisher.publish_request(request)
+
+    assert envelope.schema_version == "v2"
+    assert envelope.routing_key == "SKU-2"
+    assert envelope.record["supplier_id"] == "SUP-2"
+    assert producer.calls[0]["record"]["supplier_id"] == "SUP-2"
+
+
+def test_publish_generated_uses_private_routing_key_and_strips_private_fields() -> None:
+    producer = RecordingProducer()
+    publisher = WarehouseEventPublisher(producer)
+
+    envelope = publisher.publish_generated(
+        {
+            "event_id": "evt-generated",
+            "event_type": "PRODUCT_MOVED",
+            "occurred_at": 1710000003000,
+            "product_id": "SKU-3",
+            "from_zone_id": "ZONE-A",
+            "to_zone_id": "ZONE-B",
+            "quantity": 4,
+            "_routing_key": "custom-routing-key",
+            "_debug_only": "should-not-leak",
+        }
+    )
+
+    assert envelope.routing_key == "custom-routing-key"
+    assert "_routing_key" not in envelope.record
+    assert "_debug_only" not in envelope.record
+    assert producer.calls[0]["routing_key"] == "custom-routing-key"
+    assert "_routing_key" not in producer.calls[0]["record"]

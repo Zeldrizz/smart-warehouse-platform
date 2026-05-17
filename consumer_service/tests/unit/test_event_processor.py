@@ -177,3 +177,171 @@ def test_order_completed_releases_reserved_inventory() -> None:
     assert totals.total_available_quantity == 85
     assert totals.total_reserved_quantity == 0
     assert order.status == "COMPLETED"
+
+
+def test_product_released_restores_available_inventory() -> None:
+    repository = FakeRepository()
+    repository.inventory[("SKU-1", "ZONE-A")] = InventoryState(
+        product_id="SKU-1",
+        zone_id="ZONE-A",
+        available_quantity=40,
+        reserved_quantity=12,
+        last_event_ts=1710000005000,
+    )
+    repository.totals["SKU-1"] = ProductTotalsState(
+        product_id="SKU-1",
+        total_available_quantity=40,
+        total_reserved_quantity=12,
+    )
+    processor = EventProcessor(repository)
+
+    result = processor.process(build_context(
+        "release-1",
+        "PRODUCT_RELEASED",
+        1710000006000,
+        product_id="SKU-1",
+        zone_id="ZONE-A",
+        quantity=5,
+    ))
+
+    inventory = repository.inventory[("SKU-1", "ZONE-A")]
+    totals = repository.totals["SKU-1"]
+    assert result.action == "applied"
+    assert inventory.available_quantity == 45
+    assert inventory.reserved_quantity == 7
+    assert totals.total_available_quantity == 45
+    assert totals.total_reserved_quantity == 7
+
+
+def test_product_shipped_reduces_available_inventory() -> None:
+    repository = FakeRepository()
+    repository.inventory[("SKU-1", "ZONE-A")] = InventoryState(
+        product_id="SKU-1",
+        zone_id="ZONE-A",
+        available_quantity=18,
+        reserved_quantity=2,
+        last_event_ts=1710000005000,
+    )
+    repository.totals["SKU-1"] = ProductTotalsState(
+        product_id="SKU-1",
+        total_available_quantity=18,
+        total_reserved_quantity=2,
+    )
+    processor = EventProcessor(repository)
+
+    result = processor.process(build_context(
+        "ship-1",
+        "PRODUCT_SHIPPED",
+        1710000007000,
+        product_id="SKU-1",
+        zone_id="ZONE-A",
+        quantity=6,
+    ))
+
+    inventory = repository.inventory[("SKU-1", "ZONE-A")]
+    totals = repository.totals["SKU-1"]
+    assert result.action == "applied"
+    assert inventory.available_quantity == 12
+    assert inventory.reserved_quantity == 2
+    assert totals.total_available_quantity == 12
+    assert totals.total_reserved_quantity == 2
+
+
+def test_inventory_counted_reconciles_available_quantity() -> None:
+    repository = FakeRepository()
+    repository.inventory[("SKU-1", "ZONE-B")] = InventoryState(
+        product_id="SKU-1",
+        zone_id="ZONE-B",
+        available_quantity=20,
+        reserved_quantity=3,
+        last_event_ts=1710000005000,
+    )
+    repository.totals["SKU-1"] = ProductTotalsState(
+        product_id="SKU-1",
+        total_available_quantity=20,
+        total_reserved_quantity=3,
+    )
+    processor = EventProcessor(repository)
+
+    result = processor.process(build_context(
+        "counted-1",
+        "INVENTORY_COUNTED",
+        1710000008000,
+        product_id="SKU-1",
+        zone_id="ZONE-B",
+        counted_quantity=11,
+    ))
+
+    inventory = repository.inventory[("SKU-1", "ZONE-B")]
+    totals = repository.totals["SKU-1"]
+    assert result.action == "applied"
+    assert inventory.available_quantity == 11
+    assert inventory.reserved_quantity == 3
+    assert totals.total_available_quantity == 11
+    assert totals.total_reserved_quantity == 3
+
+
+def test_product_moved_transfers_inventory_and_preserves_supplier() -> None:
+    repository = FakeRepository()
+    repository.inventory[("SKU-1", "ZONE-A")] = InventoryState(
+        product_id="SKU-1",
+        zone_id="ZONE-A",
+        available_quantity=25,
+        reserved_quantity=0,
+        supplier_id="SUP-1",
+        last_event_ts=1710000005000,
+    )
+    repository.inventory[("SKU-1", "ZONE-B")] = InventoryState(
+        product_id="SKU-1",
+        zone_id="ZONE-B",
+        available_quantity=5,
+        reserved_quantity=0,
+        supplier_id=None,
+        last_event_ts=1710000005000,
+    )
+    repository.totals["SKU-1"] = ProductTotalsState(
+        product_id="SKU-1",
+        total_available_quantity=30,
+        total_reserved_quantity=0,
+    )
+    processor = EventProcessor(repository)
+
+    result = processor.process(build_context(
+        "move-1",
+        "PRODUCT_MOVED",
+        1710000009000,
+        product_id="SKU-1",
+        from_zone_id="ZONE-A",
+        to_zone_id="ZONE-B",
+        quantity=9,
+    ))
+
+    source = repository.inventory[("SKU-1", "ZONE-A")]
+    target = repository.inventory[("SKU-1", "ZONE-B")]
+    totals = repository.totals["SKU-1"]
+    assert result.action == "applied"
+    assert source.available_quantity == 16
+    assert target.available_quantity == 14
+    assert target.supplier_id == "SUP-1"
+    assert totals.total_available_quantity == 30
+    assert totals.total_reserved_quantity == 0
+
+
+def test_move_to_same_zone_is_sent_to_dlq() -> None:
+    repository = FakeRepository()
+    processor = EventProcessor(repository)
+
+    result = processor.process(build_context(
+        "move-invalid-1",
+        "PRODUCT_MOVED",
+        1710000010000,
+        product_id="SKU-1",
+        from_zone_id="ZONE-A",
+        to_zone_id="ZONE-A",
+        quantity=1,
+    ))
+
+    assert result.action == "dlq"
+    assert result.outcome == "DLQ"
+    assert result.error_code == "INVALID_MOVE"
+    assert repository.apply_calls == 0
