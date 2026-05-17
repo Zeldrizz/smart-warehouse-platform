@@ -144,18 +144,20 @@ demo_prepare_manual_window
 Теперь подготовить уникальные идентификаторы:
 
 ```bash
-SUFFIX="$(date +%s)"
-PRODUCT_ID="SKU-DEMO-${SUFFIX}"
-ORDER_ID="ORDER-DEMO-${SUFFIX}"
-BASE_TS="$(date -u +%s000)"
+export SUFFIX="$(date +%s)"
+export PRODUCT_ID="SKU-DEMO-${SUFFIX}"
+export ORDER_ID="ORDER-DEMO-${SUFFIX}"
+export BASE_TS="$(date -u +%s000)"
+echo "$PRODUCT_ID"
+echo "$ORDER_ID"
 ```
+
+Важно: команды ниже лучше запускать **по одной**, а не вставлять весь раздел целиком в IDE task-runner или одноразовый терминал.
 
 #### Шаг 1. PRODUCT_RECEIVED
 
 ```bash
-curl -sS -X POST http://localhost:8001/api/v1/events \
-  -H "Content-Type: application/json" \
-  -d "{\"event_id\":\"${PRODUCT_ID}-recv\",\"event_type\":\"PRODUCT_RECEIVED\",\"occurred_at\":${BASE_TS},\"product_id\":\"${PRODUCT_ID}\",\"zone_id\":\"ZONE-A\",\"quantity\":100}" | python3 -m json.tool
+curl -sS -X POST http://localhost:8001/api/v1/events -H "Content-Type: application/json" -d "{\"event_id\":\"${PRODUCT_ID}-recv\",\"event_type\":\"PRODUCT_RECEIVED\",\"occurred_at\":${BASE_TS},\"product_id\":\"${PRODUCT_ID}\",\"zone_id\":\"ZONE-A\",\"quantity\":100}" | python3 -m json.tool
 ```
 
 Что проговорить:
@@ -168,11 +170,7 @@ curl -sS -X POST http://localhost:8001/api/v1/events \
 
 ```bash
 sleep 3
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT product_id, zone_id, available_quantity, reserved_quantity
-FROM warehouse.inventory_by_product_zone
-WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT product_id, zone_id, available_quantity, reserved_quantity FROM warehouse.inventory_by_product_zone WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';"
 ```
 
 Что должно быть видно:
@@ -183,16 +181,10 @@ WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
 #### Шаг 2. PRODUCT_RESERVED
 
 ```bash
-curl -sS -X POST http://localhost:8001/api/v1/events \
-  -H "Content-Type: application/json" \
-  -d "{\"event_id\":\"${PRODUCT_ID}-reserve\",\"event_type\":\"PRODUCT_RESERVED\",\"occurred_at\":$((BASE_TS+1000)),\"product_id\":\"${PRODUCT_ID}\",\"zone_id\":\"ZONE-A\",\"quantity\":30}" | python3 -m json.tool
+curl -sS -X POST http://localhost:8001/api/v1/events -H "Content-Type: application/json" -d "{\"event_id\":\"${PRODUCT_ID}-reserve\",\"event_type\":\"PRODUCT_RESERVED\",\"occurred_at\":$((BASE_TS+1000)),\"product_id\":\"${PRODUCT_ID}\",\"zone_id\":\"ZONE-A\",\"quantity\":30}" | python3 -m json.tool
 
 sleep 3
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT product_id, zone_id, available_quantity, reserved_quantity
-FROM warehouse.inventory_by_product_zone
-WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT product_id, zone_id, available_quantity, reserved_quantity FROM warehouse.inventory_by_product_zone WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';"
 ```
 
 Что должно быть видно:
@@ -203,16 +195,10 @@ WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
 #### Шаг 3. PRODUCT_MOVED
 
 ```bash
-curl -sS -X POST http://localhost:8001/api/v1/events \
-  -H "Content-Type: application/json" \
-  -d "{\"event_id\":\"${PRODUCT_ID}-move\",\"event_type\":\"PRODUCT_MOVED\",\"occurred_at\":$((BASE_TS+2000)),\"product_id\":\"${PRODUCT_ID}\",\"from_zone_id\":\"ZONE-A\",\"to_zone_id\":\"ZONE-B\",\"quantity\":20}" | python3 -m json.tool
+curl -sS -X POST http://localhost:8001/api/v1/events -H "Content-Type: application/json" -d "{\"event_id\":\"${PRODUCT_ID}-move\",\"event_type\":\"PRODUCT_MOVED\",\"occurred_at\":$((BASE_TS+2000)),\"product_id\":\"${PRODUCT_ID}\",\"from_zone_id\":\"ZONE-A\",\"to_zone_id\":\"ZONE-B\",\"quantity\":20}" | python3 -m json.tool
 
 sleep 3
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT product_id, zone_id, available_quantity, reserved_quantity
-FROM warehouse.inventory_by_product_zone
-WHERE product_id = '${PRODUCT_ID}' AND zone_id IN ('ZONE-A', 'ZONE-B');
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT product_id, zone_id, available_quantity, reserved_quantity FROM warehouse.inventory_by_product_zone WHERE product_id = '${PRODUCT_ID}' AND zone_id IN ('ZONE-A', 'ZONE-B');"
 ```
 
 Что должно быть видно:
@@ -223,16 +209,10 @@ WHERE product_id = '${PRODUCT_ID}' AND zone_id IN ('ZONE-A', 'ZONE-B');
 #### Шаг 4. ORDER_CREATED
 
 ```bash
-curl -sS -X POST http://localhost:8001/api/v1/events \
-  -H "Content-Type: application/json" \
-  -d "{\"event_id\":\"${ORDER_ID}-create\",\"event_type\":\"ORDER_CREATED\",\"occurred_at\":$((BASE_TS+3000)),\"order_id\":\"${ORDER_ID}\",\"items\":[{\"product_id\":\"${PRODUCT_ID}\",\"zone_id\":\"ZONE-A\",\"quantity\":15}]}" | python3 -m json.tool
+curl -sS -X POST http://localhost:8001/api/v1/events -H "Content-Type: application/json" -d "{\"event_id\":\"${ORDER_ID}-create\",\"event_type\":\"ORDER_CREATED\",\"occurred_at\":$((BASE_TS+3000)),\"order_id\":\"${ORDER_ID}\",\"items\":[{\"product_id\":\"${PRODUCT_ID}\",\"zone_id\":\"ZONE-A\",\"quantity\":15}]}" | python3 -m json.tool
 
 sleep 3
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT product_id, zone_id, available_quantity, reserved_quantity
-FROM warehouse.inventory_by_product_zone
-WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT product_id, zone_id, available_quantity, reserved_quantity FROM warehouse.inventory_by_product_zone WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';"
 ```
 
 Что должно быть видно:
@@ -245,28 +225,14 @@ WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
 #### Шаг 5. ORDER_COMPLETED
 
 ```bash
-curl -sS -X POST http://localhost:8001/api/v1/events \
-  -H "Content-Type: application/json" \
-  -d "{\"event_id\":\"${ORDER_ID}-complete\",\"event_type\":\"ORDER_COMPLETED\",\"occurred_at\":$((BASE_TS+4000)),\"order_id\":\"${ORDER_ID}\"}" | python3 -m json.tool
+curl -sS -X POST http://localhost:8001/api/v1/events -H "Content-Type: application/json" -d "{\"event_id\":\"${ORDER_ID}-complete\",\"event_type\":\"ORDER_COMPLETED\",\"occurred_at\":$((BASE_TS+4000)),\"order_id\":\"${ORDER_ID}\"}" | python3 -m json.tool
 
 sleep 5
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT product_id, zone_id, available_quantity, reserved_quantity
-FROM warehouse.inventory_by_product_zone
-WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT product_id, zone_id, available_quantity, reserved_quantity FROM warehouse.inventory_by_product_zone WHERE product_id = '${PRODUCT_ID}' AND zone_id = 'ZONE-A';"
 
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT total_available_quantity, total_reserved_quantity
-FROM warehouse.inventory_totals_by_product
-WHERE product_id = '${PRODUCT_ID}';
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT total_available_quantity, total_reserved_quantity FROM warehouse.inventory_totals_by_product WHERE product_id = '${PRODUCT_ID}';"
 
-docker exec smart-warehouse-cassandra-1 cqlsh -e "
-SELECT status
-FROM warehouse.orders_by_id
-WHERE order_id = '${ORDER_ID}';
-"
+docker exec smart-warehouse-cassandra-1 cqlsh -e "SELECT status FROM warehouse.orders_by_id WHERE order_id = '${ORDER_ID}';"
 ```
 
 Что должно быть видно в конце полного сценария:
